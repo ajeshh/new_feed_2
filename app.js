@@ -35,7 +35,21 @@ app.get("/articles/new", function (req, res) {
 res.render("articles/new");
 });
 
-
+app.post("/articles", function (req, res) {
+  var newArticle = req.body.article;
+  pg.connect(config, function(err, client, done){
+      if (err) {
+           console.error("OOOPS!!! SOMETHING WENT WRONG!", err);
+      }
+      client.query("INSERT INTO articles (title, author, summary) VALUES ($1, $2, $3) RETURNING *", [newArticle.title, newArticle.author, newArticle.summary], function (err, result) {
+          done(); 
+          console.log(result.rows);
+          var article = result.rows[0];
+          res.redirect("/articles/" + article.id);           
+      });
+  });
+  
+});
 
 
 //port listening
