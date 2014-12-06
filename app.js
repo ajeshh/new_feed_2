@@ -4,6 +4,7 @@ var express = require("express"),
   pg = require("pg"),
   app = express();
 
+app.use(methodOverride("_method"));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
@@ -50,6 +51,37 @@ app.post("/articles", function (req, res) {
   });
   
 });
+
+app.get("/articles/:id", function (req, res) {
+  pg.connect(config, function(err, client, done){
+        if (err) {
+             console.error("OOOPS!!! SOMETHING WENT WRONG!", err);
+        }
+        client.query("SELECT * FROM articles WHERE id=$1", [req.params.id], function (err, result) {
+            done(); 
+            console.log(result.rows); 
+            if (result.rows.length) {
+              res.render("articles/show", {article: result.rows[0]});
+            } else {
+              res.status(404).send("Article Not Found");
+            }
+          });
+        });
+  });
+
+app.delete("/articles/:id", function (req, res) {
+pg.connect(config, function(err, client, done) {
+	if (err)  {
+		console.error("OOOPS!!! SOMETHING WENT WRONG!", err);
+	}
+		client.query("DELETE FROM articles WHERE id=$1", [req.params.id], function (err, result) {
+			res.redirect("/articles");
+            done();
+            console.log(result.rows); 
+        	});
+});
+});
+
 
 
 //port listening
