@@ -7,13 +7,13 @@ var express = require("express"),
 app.use(methodOverride("_method"));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
+app.use(express.static(__dirname + "/public"));
 
 var config = {
   database: "articles_app",
   port: 5432,
   host:"localhost"
 }; 
-
 
 app.get("/articles", function (req, res) {
    pg.connect(config, function(err, client, done){
@@ -29,27 +29,8 @@ app.get("/articles", function (req, res) {
     });
 });
 
-
-
-
 app.get("/articles/new", function (req, res) {
 res.render("articles/new");
-});
-
-app.post("/articles", function (req, res) {
-  var newArticle = req.body.article;
-  pg.connect(config, function(err, client, done){
-      if (err) {
-           console.error("OOOPS!!! SOMETHING WENT WRONG!", err);
-      }
-      client.query("INSERT INTO articles (title, author, summary) VALUES ($1, $2, $3) RETURNING *", [newArticle.title, newArticle.author, newArticle.summary], function (err, result) {
-          done(); 
-          console.log(result.rows);
-          var article = result.rows[0];
-          res.redirect("/articles/" + article.id);           
-      });
-  });
-  
 });
 
 app.get("/articles/:id", function (req, res) {
@@ -69,6 +50,22 @@ app.get("/articles/:id", function (req, res) {
         });
   });
 
+app.post("/articles", function (req, res) {
+  var newArticle = req.body.article;
+  pg.connect(config, function(err, client, done){
+      if (err) {
+           console.error("OOOPS!!! SOMETHING WENT WRONG!", err);
+      }
+      client.query("INSERT INTO articles (title, author, summary) VALUES ($1, $2, $3) RETURNING *", [newArticle.title, newArticle.author, newArticle.summary], function (err, result) {
+          done(); 
+          console.log(result.rows);
+          var article = result.rows[0];
+          res.redirect("/articles/" + article.id);
+      });
+  });
+  
+});
+
 app.delete("/articles/:id", function (req, res) {
 pg.connect(config, function(err, client, done) {
 	if (err)  {
@@ -82,7 +79,9 @@ pg.connect(config, function(err, client, done) {
 });
 });
 
-
+app.get("/", function (req, res) {
+  res.render("sites/index");
+});
 
 //port listening
 app.listen(3000, function () {
